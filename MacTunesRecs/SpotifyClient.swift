@@ -1,9 +1,16 @@
 import Foundation
 
-/// Handles Spotify Web API authentication and album recommendation fetching.
-/// Uses the Client Credentials flow; all network state is scoped to a single instance.
+/// Protocol for Spotify client operations, enabling dependency injection in tests.
+protocol SpotifyClientProtocol {
+    func recommendAlbumsNotInLibrary(
+        libraryIndex: LibraryIndex,
+        focusGenre: String?,
+        limit: Int,
+        avoidAlbumIDs: Set<String>
+    ) async throws -> [Recommendation]
+}
+
 final class SpotifyClient {
-    /// OAuth credentials required to authenticate with the Spotify Web API.
     struct Config: Equatable {
         let clientId: String
         let clientSecret: String
@@ -25,8 +32,11 @@ final class SpotifyClient {
         self.config = config
     }
 
-    /// Fetches up to `limit` Spotify album recommendations that are not already in the user's library.
-    /// Falls back to a genre-anchored artist/album search when the recommendations endpoint is unavailable.
+    /// Tests if the current credentials can successfully obtain a Spotify token.
+    func testConnection() async throws {
+        try await ensureToken()
+    }
+
     func recommendAlbumsNotInLibrary(
         libraryIndex: LibraryIndex,
         focusGenre: String?,
@@ -120,6 +130,72 @@ final class SpotifyClient {
         return recommendations.shuffled()
     }
 
+    // MARK: - Retryable Request
+
+    /// Performs a URLRequest with automatic retry on HTTP 429 and 5xx responses.
+    /// - On 429: reads Retry-After header (default 5s, cap 30s), sleeps, then retries.
+    /// - On 5xx: exponential backoff (1s, 2s, 4s) before retrying.
+    /// - On 401: immediately throws SpotifyError.invalidCredentials.
+    /// - After maxAttempts exhausted: throws SpotifyError.networkError.
+    private func retryableRequest(_ request: URLRequest, maxAttempts: Int = 3) async throws -> (Data, HTTPURLResponse) {
+        var lastError: Error = SpotifyError.networkError
+        for attempt in 1...maxAttempts {
+            let (data, response): (Data, URLResponse)
+            do {
+                (data, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                throw mapNetworkError(error)
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw SpotifyError.networkError
+            }
+
+            let statusCode = httpResponse.statusCode
+
+            // Success
+            if (200...299).contains(statusCode) {
+                return (data, httpResponse)
+            }
+
+            // Immediate auth failure - no retry
+            if statusCode == 401 {
+                throw SpotifyError.invalidCredentials
+            }
+
+            // Rate limited - read Retry-After header
+            if statusCode == 429 {
+                if attempt < maxAttempts {
+                    var retryAfterSeconds: Double = 5
+                    if let retryHeader = httpResponse.value(forHTTPHeaderField: "Retry-After"),
+                       let parsed = Double(retryHeader) {
+                        retryAfterSeconds = min(parsed, 30)
+                    }
+                    let nanoseconds = UInt64(retryAfterSeconds * 1_000_000_000)
+                    try await Task.sleep(nanoseconds: nanoseconds)
+                }
+                lastError = SpotifyError.rateLimited
+                continue
+            }
+
+            // Server error - exponential backoff
+            if (500...599).contains(statusCode) {
+                if attempt < maxAttempts {
+                    // attempt 1 -> 1s, attempt 2 -> 2s, attempt 3 -> 4s
+                    let backoffSeconds: Double = pow(2.0, Double(attempt - 1))
+                    let nanoseconds = UInt64(backoffSeconds * 1_000_000_000)
+                    try await Task.sleep(nanoseconds: nanoseconds)
+                }
+                lastError = SpotifyError.httpStatus(endpoint: "request", code: statusCode)
+                continue
+            }
+
+            // Other non-2xx - do not retry
+            throw SpotifyError.httpStatus(endpoint: "request", code: statusCode)
+        }
+        throw lastError
+    }
+
     private func searchAlbumCandidates(
         token: String,
         focusSeed: String?,
@@ -129,8 +205,6 @@ final class SpotifyClient {
     ) async throws -> [SpotifyTrack] {
         try guardNetworkBackoff()
 
-        // Strict fallback when recommendations endpoint is unavailable:
-        // anchor on genre -> find artists -> collect their albums.
         if let focusSeed, !focusSeed.isEmpty {
             let artists = try await searchArtistsByGenre(token: token, genreSeed: focusSeed, limit: 40)
             var strictAlbumsById: [String: SpotifyAlbum] = [:]
@@ -189,16 +263,20 @@ final class SpotifyClient {
             var request = URLRequest(url: components.url!)
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-            let (data, response): (Data, URLResponse)
+            let (data, httpResponse): (Data, HTTPURLResponse)
             do {
-                (data, response) = try await URLSession.shared.data(for: request)
+                (data, httpResponse) = try await retryableRequest(request)
+            } catch let err as SpotifyError {
+                switch err {
+                case .invalidCredentials:
+                    throw err
+                default:
+                    continue
+                }
             } catch {
-                throw mapNetworkError(error)
-            }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
                 continue
             }
+
             guard httpResponse.statusCode == 200 else {
                 if httpResponse.statusCode == 400 || httpResponse.statusCode == 401 {
                     throw SpotifyError.invalidCredentials
@@ -301,16 +379,13 @@ final class SpotifyClient {
         var request = URLRequest(url: components.url!)
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, response): (Data, URLResponse)
+        let (data, httpResponse): (Data, HTTPURLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, httpResponse) = try await retryableRequest(request)
         } catch {
-            throw mapNetworkError(error)
+            throw error
         }
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            return []
-        }
         guard httpResponse.statusCode == 200 else {
             if httpResponse.statusCode == 400 || httpResponse.statusCode == 401 {
                 throw SpotifyError.invalidCredentials
@@ -327,7 +402,6 @@ final class SpotifyClient {
         genres: [String],
         artistIds: [String]
     ) -> (genres: [String], artists: [String]) {
-        // If user picked a genre, keep recommendations anchored to that genre.
         if let focus, !focus.isEmpty {
             return ([focus], [])
         }
@@ -384,7 +458,6 @@ final class SpotifyClient {
             return false
         }
 
-        // If genre evidence is unavailable from Spotify artist profiles, do not hard-block the item.
         return true
     }
 
@@ -455,6 +528,7 @@ final class SpotifyClient {
         return decoded.artists.items.first?.id
     }
 
+    @discardableResult
     private func ensureToken() async throws -> String {
         try guardNetworkBackoff()
 
@@ -512,7 +586,6 @@ final class SpotifyClient {
         }
         guard httpResponse.statusCode == 200 else {
             if httpResponse.statusCode == 404 {
-                // Some apps/accounts cannot access this endpoint anymore.
                 cachedGenres = Self.fallbackGenreSeeds
                 return Self.fallbackGenreSeeds
             }
@@ -547,15 +620,20 @@ final class SpotifyClient {
         var request = URLRequest(url: components.url!)
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, response): (Data, URLResponse)
+        let (data, httpResponse): (Data, HTTPURLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw mapNetworkError(error)
+            (data, httpResponse) = try await retryableRequest(request)
+        } catch let err as SpotifyError {
+            switch err {
+            case .httpStatus(_, let code) where code == 404:
+                throw SpotifyError.recommendationsUnavailable
+            case .invalidCredentials:
+                throw err
+            default:
+                throw SpotifyError.recommendationsFailed
+            }
         }
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw SpotifyError.recommendationsFailed
-        }
+
         guard httpResponse.statusCode == 200 else {
             if httpResponse.statusCode == 404 {
                 throw SpotifyError.recommendationsUnavailable
@@ -585,7 +663,6 @@ final class SpotifyClient {
             if normalizedCandidate == normalized {
                 score = 10_000
             } else if normalizedCandidate.contains(normalized) || normalized.contains(normalizedCandidate) {
-                // Prefer specific sub-genres (e.g. black-metal) over broad genre (metal).
                 score = 1_000 + normalizedCandidate.count
             } else {
                 continue
@@ -622,7 +699,6 @@ final class SpotifyClient {
 
         switch urlError.code {
         case .cannotFindHost, .dnsLookupFailed:
-            // Avoid spamming resolver failures when sandbox/network is misconfigured.
             nextNetworkAttemptAt = Date().addingTimeInterval(20)
             return SpotifyError.cannotResolveHost
         case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
@@ -643,13 +719,14 @@ final class SpotifyClient {
             if normalizedGenre.contains(normalizedFocus) || normalizedFocus.contains(normalizedGenre) {
                 best = max(best, 3)
             } else if !normalizedFocus.isEmpty && !normalizedGenre.isEmpty {
-                // keep as weak signal if genre list exists but not exact.
                 best = max(best, 1)
             }
         }
         return best
     }
 }
+
+extension SpotifyClient: SpotifyClientProtocol {}
 
 private struct Token: Equatable {
     let value: String
@@ -738,26 +815,18 @@ private struct ArtistAlbumsResponse: Codable {
     let items: [SpotifyAlbum]
 }
 
-/// Errors that can be thrown by `SpotifyClient`.
 enum SpotifyError: Error {
-    /// OAuth token request to `accounts.spotify.com` failed.
     case tokenFailed
-    /// Could not retrieve the list of available Spotify genre seeds.
     case genresFailed
-    /// The `/recommendations` endpoint returned an unexpected failure.
     case recommendationsFailed
-    /// The `/recommendations` endpoint returned 404 (not available for this app tier).
     case recommendationsUnavailable
-    /// The supplied Client ID or Client Secret was rejected (HTTP 400/401).
     case invalidCredentials
-    /// An unexpected HTTP status code was returned from the given endpoint.
     case httpStatus(endpoint: String, code: Int)
-    /// DNS resolution for `api.spotify.com` failed, usually due to sandbox restrictions.
     case cannotResolveHost
-    /// Device has no active internet connection.
     case networkUnavailable
-    /// A recent DNS failure is still within the back-off window; request was skipped.
     case networkBackoff
+    case networkError
+    case rateLimited
 }
 
 extension SpotifyError: LocalizedError {
@@ -781,6 +850,23 @@ extension SpotifyError: LocalizedError {
             return "Network unavailable while contacting Spotify."
         case .networkBackoff:
             return "Retrying Spotify in a few seconds to avoid repeated DNS failures."
+        case .networkError:
+            return "Network request failed after maximum retry attempts."
+        case .rateLimited:
+            return "Spotify rate limit reached. The app will retry automatically."
         }
+    }
+}
+
+// MARK: - Internal Testing Hooks
+extension SpotifyClient {
+    /// Exposed for unit testing only.
+    static func _matchGenreForTesting(localGenre: String, availableGenres: [String]) -> String? {
+        matchGenre(localGenre: localGenre, availableGenres: availableGenres)
+    }
+
+    /// Exposed for unit testing only.
+    static func _normalizeForTesting(_ value: String) -> String {
+        normalize(value)
     }
 }
