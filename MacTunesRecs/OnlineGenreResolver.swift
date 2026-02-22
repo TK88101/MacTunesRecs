@@ -1,5 +1,7 @@
 import Foundation
 
+/// Actor that resolves album genres via the iTunes Search API, with a persistent UserDefaults cache.
+/// Negative results are stored with a sentinel marker to avoid redundant network requests across sessions.
 actor OnlineGenreResolver {
     private let cacheKey = "online_album_genre_cache_v1"
     private let noResultMarker = "__NONE__"
@@ -16,6 +18,8 @@ actor OnlineGenreResolver {
         self.session = URLSession(configuration: configuration)
     }
 
+    /// Resolves genres for the given albums using a cache-first strategy; uncached albums are queried
+    /// from the iTunes Search API. Cache is persisted to UserDefaults every 30 resolved albums and on completion.
     func resolveGenres(for albums: [(key: String, artist: String, album: String)]) async throws -> [String: String] {
         guard !albums.isEmpty else { return [:] }
 

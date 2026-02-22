@@ -3,18 +3,30 @@ import SwiftUI
 import AppKit
 import Combine
 
+/// Main-actor observable view model that drives the entire MacTunesRecs UI.
+/// Coordinates library scanning, genre computation, online genre enrichment, and Spotify recommendations.
 @MainActor
 final class LibraryViewModel: ObservableObject {
+    /// All tracks loaded from the most recent scan, enriched with online genres where available.
     @Published var tracks: [TrackInfo] = []
+    /// Computed genre pie-chart slices derived from the current track list.
     @Published var genreSlices: [GenreSlice] = []
+    /// The genre currently selected in the UI; drives recommendation filtering.
     @Published var selectedGenre: String? = nil
+    /// The most recently generated list of album recommendations.
     @Published var recommendations: [Recommendation] = []
+    /// Human-readable status message displayed in the toolbar/status bar.
     @Published var status: String = "Ready"
+    /// `true` while a library scan is in progress.
     @Published var isScanning: Bool = false
+    /// Controls visibility of the Spotify credentials sheet.
     @Published var showSpotifySheet: Bool = false
 
+    /// Spotify OAuth Client ID, persisted in UserDefaults.
     @Published var spotifyClientId: String = ""
+    /// Spotify OAuth Client Secret, persisted in UserDefaults.
     @Published var spotifyClientSecret: String = ""
+    /// `true` when valid Spotify credentials are configured and a `SpotifyClient` is active.
     @Published var spotifyConnected: Bool = false
 
     private let defaults = UserDefaults.standard
@@ -30,6 +42,7 @@ final class LibraryViewModel: ObservableObject {
         refreshSpotifyClient()
     }
 
+    /// Scans the default iTunes/Music library XML and populates `tracks`.
     func scanITunesLibrary() {
         guard !isScanning else { return }
         isScanning = true
@@ -50,6 +63,7 @@ final class LibraryViewModel: ObservableObject {
         }
     }
 
+    /// Opens an NSOpenPanel for the user to pick a music folder, then scans it.
     func chooseFolderAndScan() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
@@ -62,6 +76,7 @@ final class LibraryViewModel: ObservableObject {
         }
     }
 
+    /// Recursively scans the given folder for audio files and populates `tracks`.
     func scanFolder(_ folderURL: URL) {
         guard !isScanning else { return }
         isScanning = true
@@ -77,11 +92,13 @@ final class LibraryViewModel: ObservableObject {
         }
     }
 
+    /// Sets `selectedGenre` and immediately triggers a fresh Spotify recommendation fetch.
     func selectGenre(_ genre: String) {
         selectedGenre = genre
         recommend()
     }
 
+    /// Fetches Spotify recommendations for the currently selected genre and updates `recommendations`.
     func recommend() {
         guard !tracks.isEmpty else {
             status = "No tracks to recommend from yet."
@@ -122,12 +139,14 @@ final class LibraryViewModel: ObservableObject {
         }
     }
 
+    /// Persists the current `spotifyClientId` and `spotifyClientSecret` to UserDefaults and refreshes the client.
     func saveSpotifyCredentials() {
         defaults.set(spotifyClientId, forKey: "spotify_client_id")
         defaults.set(spotifyClientSecret, forKey: "spotify_client_secret")
         refreshSpotifyClient()
     }
 
+    /// Wipes stored Spotify credentials from memory and UserDefaults, disabling the Spotify client.
     func clearSpotifyCredentials() {
         spotifyClientId = ""
         spotifyClientSecret = ""

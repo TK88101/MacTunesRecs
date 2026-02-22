@@ -1,6 +1,9 @@
 import Foundation
 
+/// Pure-logic namespace for all recommendation and library-analysis algorithms.
 enum RecommendationEngine {
+    /// Computes pie-chart slices from the track list, rolling small genres into an "Other" bucket.
+    /// Returns the slices and the list of major genre names (excludes "Other").
     static func genreSlices(from tracks: [TrackInfo], maxSlices: Int) -> (slices: [GenreSlice], majorGenres: [String]) {
         let albums = albumInfos(from: tracks)
         var counts: [String: Int] = [:]
@@ -42,6 +45,7 @@ enum RecommendationEngine {
         return (slices, majorGenres)
     }
 
+    /// Builds a `LibraryIndex` containing deduplication keys, top genres, and top artists up to `topLimit` entries each.
     static func buildLibraryIndex(from tracks: [TrackInfo], topLimit: Int) -> LibraryIndex {
         let albums = albumInfos(from: tracks)
         var albumKeys = Set<String>()
@@ -115,6 +119,7 @@ enum RecommendationEngine {
         return recommendations
     }
 
+    /// Returns a stable, case-folded deduplication key in the form `"normalizedArtist||normalizedAlbum"`.
     static func albumKey(artist: String, album: String) -> String {
         "\(normalizeKey(artist))||\(normalizeKey(album))"
     }

@@ -1,6 +1,9 @@
 import Foundation
 
+/// Handles Spotify Web API authentication and album recommendation fetching.
+/// Uses the Client Credentials flow; all network state is scoped to a single instance.
 final class SpotifyClient {
+    /// OAuth credentials required to authenticate with the Spotify Web API.
     struct Config: Equatable {
         let clientId: String
         let clientSecret: String
@@ -22,6 +25,8 @@ final class SpotifyClient {
         self.config = config
     }
 
+    /// Fetches up to `limit` Spotify album recommendations that are not already in the user's library.
+    /// Falls back to a genre-anchored artist/album search when the recommendations endpoint is unavailable.
     func recommendAlbumsNotInLibrary(
         libraryIndex: LibraryIndex,
         focusGenre: String?,
@@ -733,15 +738,25 @@ private struct ArtistAlbumsResponse: Codable {
     let items: [SpotifyAlbum]
 }
 
+/// Errors that can be thrown by `SpotifyClient`.
 enum SpotifyError: Error {
+    /// OAuth token request to `accounts.spotify.com` failed.
     case tokenFailed
+    /// Could not retrieve the list of available Spotify genre seeds.
     case genresFailed
+    /// The `/recommendations` endpoint returned an unexpected failure.
     case recommendationsFailed
+    /// The `/recommendations` endpoint returned 404 (not available for this app tier).
     case recommendationsUnavailable
+    /// The supplied Client ID or Client Secret was rejected (HTTP 400/401).
     case invalidCredentials
+    /// An unexpected HTTP status code was returned from the given endpoint.
     case httpStatus(endpoint: String, code: Int)
+    /// DNS resolution for `api.spotify.com` failed, usually due to sandbox restrictions.
     case cannotResolveHost
+    /// Device has no active internet connection.
     case networkUnavailable
+    /// A recent DNS failure is still within the back-off window; request was skipped.
     case networkBackoff
 }
 
