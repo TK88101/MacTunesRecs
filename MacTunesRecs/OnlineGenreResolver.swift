@@ -1,36 +1,51 @@
 import Foundation
 
-/// Actor that resolves album genres via the iTunes Search API, with a persistent UserDefaults cache.
-/// Negative results are stored with a sentinel marker to avoid redundant network requests across sessions.
 actor OnlineGenreResolver {
-    private let cacheKey = "online_album_genre_cache_v1"
+    private let cacheKey = "online_album_genre_cache_v2"
     private let noResultMarker = "__NONE__"
 
-    private var cache: [String: String]
+    private struct CacheEntry: Codable {
+        let genre: String   // "__NONE__" for negative cache entries
+        let storedAt: Date
+    }
+
+    private var cache: [String: CacheEntry]
     private let session: URLSession
+    private let defaults: UserDefaults
 
-    init() {
-        self.cache = UserDefaults.standard.dictionary(forKey: cacheKey) as? [String: String] ?? [:]
-
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 8
         configuration.timeoutIntervalForResource = 12
         self.session = URLSession(configuration: configuration)
+
+        if let data = defaults.data(forKey: "online_album_genre_cache_v2"),
+           let decoded = try? JSONDecoder().decode([String: CacheEntry].self, from: data) {
+            self.cache = decoded
+        } else {
+            self.cache = [:]
+        }
     }
 
-    /// Resolves genres for the given albums using a cache-first strategy; uncached albums are queried
-    /// from the iTunes Search API. Cache is persisted to UserDefaults every 30 resolved albums and on completion.
     func resolveGenres(for albums: [(key: String, artist: String, album: String)]) async throws -> [String: String] {
         guard !albums.isEmpty else { return [:] }
 
+        let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 60 * 60)
         var resolved: [String: String] = [:]
         var pending: [(key: String, artist: String, album: String)] = []
         pending.reserveCapacity(albums.count)
 
         for album in albums {
-            if let cached = cache[album.key] {
-                if cached != noResultMarker {
-                    resolved[album.key] = cached
+            if let entry = cache[album.key] {
+                // Check TTL - treat entries older than 30 days as cache miss
+                if entry.storedAt > thirtyDaysAgo {
+                    if entry.genre != noResultMarker {
+                        resolved[album.key] = entry.genre
+                    }
+                } else {
+                    // Expired entry - treat as miss
+                    pending.append(album)
                 }
             } else {
                 pending.append(album)
@@ -44,9 +59,9 @@ actor OnlineGenreResolver {
         for album in pending {
             if let genre = try await fetchGenre(for: album) {
                 resolved[album.key] = genre
-                cache[album.key] = genre
+                cache[album.key] = CacheEntry(genre: genre, storedAt: Date())
             } else {
-                cache[album.key] = noResultMarker
+                cache[album.key] = CacheEntry(genre: noResultMarker, storedAt: Date())
             }
 
             processed += 1
@@ -57,6 +72,16 @@ actor OnlineGenreResolver {
 
         persistCache()
         return resolved
+    }
+
+    private func trimCache(maxEntries: Int = 5000) {
+        guard cache.count > maxEntries else { return }
+        let sorted = cache.sorted { $0.value.storedAt < $1.value.storedAt }
+        let toRemove = cache.count - maxEntries
+        for (index, pair) in sorted.enumerated() {
+            if index >= toRemove { break }
+            cache.removeValue(forKey: pair.key)
+        }
     }
 
     private func preflightNetwork() async throws {
@@ -166,7 +191,10 @@ actor OnlineGenreResolver {
     }
 
     private func persistCache() {
-        UserDefaults.standard.set(cache, forKey: cacheKey)
+        trimCache()
+        if let data = try? JSONEncoder().encode(cache) {
+            defaults.set(data, forKey: cacheKey)
+        }
     }
 
     private func normalize(_ value: String) -> String {
