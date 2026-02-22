@@ -266,6 +266,9 @@ private struct SpotifySettingsView: View {
     @ObservedObject var viewModel: LibraryViewModel
     @Environment(\.dismiss) private var dismiss
 
+    @State private var connectionTestResult: String? = nil
+    @State private var isTestingConnection: Bool = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Spotify Settings")
@@ -281,6 +284,20 @@ private struct SpotifySettingsView: View {
                 SecureField("Client Secret", text: $viewModel.spotifyClientSecret)
             }
 
+            if let result = connectionTestResult {
+                HStack(spacing: 6) {
+                    if result.hasPrefix("✓") {
+                        Text(result)
+                            .foregroundColor(.green)
+                            .font(.callout)
+                    } else {
+                        Text(result)
+                            .foregroundColor(.red)
+                            .font(.callout)
+                    }
+                }
+            }
+
             HStack(spacing: 12) {
                 Button("Save") {
                     viewModel.saveSpotifyCredentials()
@@ -288,12 +305,50 @@ private struct SpotifySettingsView: View {
                 }
                 Button("Clear") {
                     viewModel.clearSpotifyCredentials()
+                    connectionTestResult = nil
                 }
+
+                if isTestingConnection {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .scaleEffect(0.7)
+                } else {
+                    Button("Test Connection") {
+                        testConnection()
+                    }
+                    .disabled(viewModel.spotifyClientId.isEmpty || viewModel.spotifyClientSecret.isEmpty)
+                }
+
                 Spacer()
                 Button("Close") { dismiss() }
             }
         }
         .padding(20)
         .frame(width: 480)
+    }
+
+    private func testConnection() {
+        isTestingConnection = true
+        connectionTestResult = nil
+
+        let clientId = viewModel.spotifyClientId
+        let clientSecret = viewModel.spotifyClientSecret
+
+        Task {
+            let client = SpotifyClient(config: .init(clientId: clientId, clientSecret: clientSecret))
+            do {
+                try await client.testConnection()
+                connectionTestResult = "✓ Connected"
+            } catch {
+                let description: String
+                if let spotifyErr = error as? SpotifyError {
+                    description = spotifyErr.localizedDescription ?? error.localizedDescription
+                } else {
+                    description = error.localizedDescription
+                }
+                connectionTestResult = description
+            }
+            isTestingConnection = false
+        }
     }
 }
