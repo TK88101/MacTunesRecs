@@ -9,13 +9,28 @@
 /* Begin PBXBuildFile section */
 		A2BD2AE92F35A6F80023E2ED /* iTunesLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2BD2AE82F35A6F80023E2ED /* iTunesLibrary.framework */; };
 		A2BD2AEB2F35A7070023E2ED /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2BD2AEA2F35A7070023E2ED /* AVFoundation.framework */; };
+		949F07BA33814212B647ADE9 /* MacTunesRecsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */; };
+		6958AB1636D14BBC910139AB /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E57F42ECFB44EAC9AD6BD90 /* XCTest.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		77ED08478A164FFFB991B8DA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A2BD2ABF2F35A6500023E2ED /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A2BD2AC62F35A6500023E2ED;
+			remoteInfo = MacTunesRecs;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A2BD2AC72F35A6500023E2ED /* MacTunesRecs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTunesRecs.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2BD2AE82F35A6F80023E2ED /* iTunesLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = iTunesLibrary.framework; path = System/Library/Frameworks/iTunesLibrary.framework; sourceTree = SDKROOT; };
 		A2BD2AEA2F35A7070023E2ED /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		A2C0AE652F3714280052180D /* MacTunesRecs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacTunesRecs.entitlements; sourceTree = "<group>"; };
+		EFB38123848E406B9A718AA1 /* MacTunesRecsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTunesRecsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacTunesRecsTests.swift; sourceTree = "<group>"; };
+		4E57F42ECFB44EAC9AD6BD90 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -49,6 +64,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA55262E46144035AA3C0647 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6958AB1636D14BBC910139AB /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -57,6 +80,7 @@
 			children = (
 				A2C0AE652F3714280052180D /* MacTunesRecs.entitlements */,
 				A2BD2AC92F35A6500023E2ED /* MacTunesRecs */,
+				96622B9EAFA04FFA9BF9D344 /* MacTunesRecsTests */,
 				A2BD2AE72F35A6F70023E2ED /* Frameworks */,
 				A2BD2AC82F35A6500023E2ED /* Products */,
 			);
@@ -66,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				A2BD2AC72F35A6500023E2ED /* MacTunesRecs.app */,
+				EFB38123848E406B9A718AA1 /* MacTunesRecsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -75,8 +100,17 @@
 			children = (
 				A2BD2AEA2F35A7070023E2ED /* AVFoundation.framework */,
 				A2BD2AE82F35A6F80023E2ED /* iTunesLibrary.framework */,
+				4E57F42ECFB44EAC9AD6BD90 /* XCTest.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		96622B9EAFA04FFA9BF9D344 /* MacTunesRecsTests */ = {
+			isa = PBXGroup;
+			children = (
+				2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */,
+			);
+			path = MacTunesRecsTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -104,6 +138,24 @@
 			productReference = A2BD2AC72F35A6500023E2ED /* MacTunesRecs.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4783E85F27374F14914E4B5C /* MacTunesRecsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 72B5190A092B421FACF7B9AF /* Build configuration list for PBXNativeTarget "MacTunesRecsTests" */;
+			buildPhases = (
+				036EFA6D8A25432896E79992 /* Sources */,
+				AA55262E46144035AA3C0647 /* Frameworks */,
+				AE1386058C3542D1B913F1C5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EFE15288E0334210BFB39DAB /* PBXTargetDependency */,
+			);
+			name = MacTunesRecsTests;
+			productName = MacTunesRecsTests;
+			productReference = EFB38123848E406B9A718AA1 /* MacTunesRecsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -117,6 +169,10 @@
 					A2BD2AC62F35A6500023E2ED = {
 						CreatedOnToolsVersion = 26.1.1;
 						LastSwiftMigration = 2610;
+					};
+					4783E85F27374F14914E4B5C = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = A2BD2AC62F35A6500023E2ED;
 					};
 				};
 			};
@@ -135,12 +191,20 @@
 			projectRoot = "";
 			targets = (
 				A2BD2AC62F35A6500023E2ED /* MacTunesRecs */,
+				4783E85F27374F14914E4B5C /* MacTunesRecsTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A2BD2AC52F35A6500023E2ED /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AE1386058C3542D1B913F1C5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -157,7 +221,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		036EFA6D8A25432896E79992 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				949F07BA33814212B647ADE9 /* MacTunesRecsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EFE15288E0334210BFB39DAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A2BD2AC62F35A6500023E2ED /* MacTunesRecs */;
+			targetProxy = 77ED08478A164FFFB991B8DA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A2BD2AD02F35A6510023E2ED /* Debug */ = {
@@ -377,6 +457,44 @@
 			};
 			name = Release;
 		};
+		A8F331DD1827433AA6256F5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4VL6682MBK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ibridge.MacTunesRecsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacTunesRecs.app/Contents/MacOS/MacTunesRecs";
+			};
+			name = Debug;
+		};
+		A00914581ACC474A95F4461E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4VL6682MBK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ibridge.MacTunesRecsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MacTunesRecs.app/Contents/MacOS/MacTunesRecs";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -394,6 +512,15 @@
 			buildConfigurations = (
 				A2BD2AD32F35A6510023E2ED /* Debug */,
 				A2BD2AD42F35A6510023E2ED /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		72B5190A092B421FACF7B9AF /* Build configuration list for PBXNativeTarget "MacTunesRecsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8F331DD1827433AA6256F5C /* Debug */,
+				A00914581ACC474A95F4461E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
