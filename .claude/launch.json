@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "MacTunesRecs Tests",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/test_server.py"],
+      "port": 8787
+    },
+    {
+      "name": "MacTunesRecs Build",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/build_server.py"],
+      "port": 8788
+    }
+  ]
+}

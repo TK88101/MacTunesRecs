@@ -11,6 +11,10 @@
 		A2BD2AEB2F35A7070023E2ED /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2BD2AEA2F35A7070023E2ED /* AVFoundation.framework */; };
 		949F07BA33814212B647ADE9 /* MacTunesRecsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */; };
 		6958AB1636D14BBC910139AB /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E57F42ECFB44EAC9AD6BD90 /* XCTest.framework */; };
+		AFEDE2F9E2634C2CB3A81C93 /* ModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F4D2CD843B4B86AC50CDC9 /* ModelsTests.swift */; };
+		D35CC0CD23614032BA48D136 /* RecommendationEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904F782D6790436382D9FF08 /* RecommendationEngineTests.swift */; };
+		7A0CE59888634685AA4FC776 /* SpotifyClientGenreMatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61020A6BECB42FA939E521C /* SpotifyClientGenreMatchTests.swift */; };
+		72B2E01B69D3425B81FD1E0D /* OnlineGenreResolverCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8A63225A584D5584B5C000 /* OnlineGenreResolverCacheTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +35,10 @@
 		EFB38123848E406B9A718AA1 /* MacTunesRecsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTunesRecsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacTunesRecsTests.swift; sourceTree = "<group>"; };
 		4E57F42ECFB44EAC9AD6BD90 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		31F4D2CD843B4B86AC50CDC9 /* ModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsTests.swift; sourceTree = "<group>"; };
+		904F782D6790436382D9FF08 /* RecommendationEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngineTests.swift; sourceTree = "<group>"; };
+		A61020A6BECB42FA939E521C /* SpotifyClientGenreMatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyClientGenreMatchTests.swift; sourceTree = "<group>"; };
+		1D8A63225A584D5584B5C000 /* OnlineGenreResolverCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineGenreResolverCacheTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -109,6 +117,10 @@
 			isa = PBXGroup;
 			children = (
 				2011C62F54514254859DEF5B /* MacTunesRecsTests.swift */,
+				31F4D2CD843B4B86AC50CDC9 /* ModelsTests.swift */,
+				904F782D6790436382D9FF08 /* RecommendationEngineTests.swift */,
+				A61020A6BECB42FA939E521C /* SpotifyClientGenreMatchTests.swift */,
+				1D8A63225A584D5584B5C000 /* OnlineGenreResolverCacheTests.swift */,
 			);
 			path = MacTunesRecsTests;
 			sourceTree = "<group>";
@@ -226,6 +238,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				949F07BA33814212B647ADE9 /* MacTunesRecsTests.swift in Sources */,
+				AFEDE2F9E2634C2CB3A81C93 /* ModelsTests.swift in Sources */,
+				D35CC0CD23614032BA48D136 /* RecommendationEngineTests.swift in Sources */,
+				7A0CE59888634685AA4FC776 /* SpotifyClientGenreMatchTests.swift in Sources */,
+				72B2E01B69D3425B81FD1E0D /* OnlineGenreResolverCacheTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
