@@ -10,15 +10,23 @@ actor OnlineGenreResolver {
     }
 
     private var cache: [String: CacheEntry]
-    private let session: URLSession
+    private var _session: URLSession?
     private let defaults: UserDefaults
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    /// Lazily creates URLSession on first network request, avoiding deferred C-level
+    /// cleanup issues when the resolver is deallocated without ever making a request.
+    private var session: URLSession {
+        if let s = _session { return s }
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 8
         configuration.timeoutIntervalForResource = 12
-        self.session = URLSession(configuration: configuration)
+        let s = URLSession(configuration: configuration)
+        _session = s
+        return s
+    }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
 
         if let data = defaults.data(forKey: "online_album_genre_cache_v2"),
            let decoded = try? JSONDecoder().decode([String: CacheEntry].self, from: data) {
@@ -26,6 +34,10 @@ actor OnlineGenreResolver {
         } else {
             self.cache = [:]
         }
+    }
+
+    deinit {
+        _session?.invalidateAndCancel()
     }
 
     func resolveGenres(for albums: [(key: String, artist: String, album: String)]) async throws -> [String: String] {

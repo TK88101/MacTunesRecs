@@ -32,6 +32,10 @@ final class SpotifyClient {
         self.config = config
     }
 
+    /// Explicit nonisolated deinit prevents Swift from scheduling deallocation via
+    /// swift_task_deinitOnExecutorImpl when released from a @MainActor context.
+    nonisolated deinit {}
+
     /// Tests if the current credentials can successfully obtain a Spotify token.
     func testConnection() async throws {
         try await ensureToken()
